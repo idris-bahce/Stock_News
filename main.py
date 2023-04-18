@@ -47,7 +47,7 @@ percentage_change = ((close_of_yesterday - close_of_day_before_yesterday) / clos
 
 
 # STEP 1: Use https://www.alphavantage.co
-# When STOCK price increase/decreases by 5% between yesterday and the day before yesterday then print("Get News").
+# When STOCK price increase/decreases by 5% between yesterday and the day before yesterday...
 def is_5_percent_changed():
     if -5 >= percentage_change or 5 <= percentage_change:
         return False
@@ -56,7 +56,7 @@ def is_5_percent_changed():
 
 
 # STEP 2: Use https://newsapi.org
-# Instead of printing ("Get News"), actually get the first 3 news pieces for the COMPANY_NAME.
+# Get the first 3 news pieces for the COMPANY_NAME.
 def take_news():
     response_news = requests.get(url_news, params=parameters_news)
     response_news.raise_for_status()
