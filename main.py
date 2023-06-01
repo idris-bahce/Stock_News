@@ -1,5 +1,5 @@
 import requests
-from twilio.rest import Client
+import smtplib
 from dotenv import load_dotenv
 import os
 
@@ -10,16 +10,18 @@ auth_token = os.getenv("auth_token")
 API_KEY_NEWS = os.getenv("API_KEY_NEWS")
 API_KEY_STOCK = os.getenv("API_KEY_STOCK")
 MY_TEL_NU = os.getenv("MY_TEL_NU")
+MY_EMAIL = os.getenv("MY_EMAIL")
+MY_PASSWORD = os.getenv("MY_PASSWORD")
+TO_EMAIL = os.getenv("TO_EMAIL")
 
-STOCK = "TSLA"
-COMPANY_NAME = "Tesla Inc"
+STOCK = "AMPS"
+COMPANY_NAME = "Altus Power Inc"
 url_stock = "https://www.alphavantage.co/query"
 parameters_stock = {
     "function": "TIME_SERIES_DAILY_ADJUSTED",
     "symbol": STOCK,
     "apikey": API_KEY_STOCK
 }
-
 
 url_news = "https://newsapi.org/v2/everything"
 parameters_news = {
@@ -49,10 +51,10 @@ percentage_change = ((close_of_yesterday - close_of_day_before_yesterday) / clos
 # STEP 1: Use https://www.alphavantage.co
 # When STOCK price increase/decreases by 5% between yesterday and the day before yesterday...
 def is_5_percent_changed():
-    if -5 >= percentage_change or 5 <= percentage_change:
-        return False
-    else:
+    if -4 >= percentage_change or 4 <= percentage_change:
         return True
+    else:
+        return False
 
 
 # STEP 2: Use https://newsapi.org
@@ -75,21 +77,23 @@ def take_news():
     news3 = three_data_for_news[2]["title"]
     news3_url = three_data_for_news[2]["url"]
 
-    return f"TSLA: {round(percentage_change)}%\nHeadline1: {news1} url:{news1_url}\nHeadline2: {news2} url:{news2_url}" \
-           f"\nHeadline3: {news3} url:{news3_url}\n "
+    return f"{STOCK}: {percentage_change}%\nHeadline1: {news1} url:{news1_url}\nHeadline2: {news2} url:" \
+           f"{news2_url}\nHeadline3: {news3} url:{news3_url}\n "
 
 
 # STEP 3: Use https://www.twilio.com
 # Send a separate message with the percentage change and each article's title and description to your phone number.
 def send_message():
-    client = Client(account_sid, auth_token)
-    message = client.messages \
-        .create(
-            body=take_news(),
-            from_='+16073605918',
-            to=MY_TEL_NU
+    news = take_news()
+    with smtplib.SMTP("smtp.gmail.com", port=587) as connection:
+        connection.starttls()
+        connection.login(user=MY_EMAIL, password=MY_PASSWORD)
+        connection.sendmail(
+            from_addr=MY_EMAIL,
+            to_addrs=TO_EMAIL,
+            msg=f"Subject:NEWS about your stock! \n\nThere have been a change in your stock."
+                f" Here is the news:\n{news}: "
         )
-    print(message.status)
 
 
 if is_5_percent_changed():
